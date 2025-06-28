@@ -20,9 +20,17 @@ import Messages from './pages/Messages';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminCourseEdit from './pages/AdminCourseEdit';
 import AdminLessonManager from './pages/AdminLessonManager';
+import AdminUserManagement from './pages/AdminUserManagement';
+import AdminCourseCreate from './pages/AdminCourseCreate';
+import AdminLessonCreate from './pages/AdminLessonCreate';
 import VideoSessionManager from './pages/VideoSessionManager';
 import TeacherCourseManagement from './pages/TeacherCourseManagement';
 import VideoSessionDetail from './pages/VideoSessionDetail';
+import QuizCreator from './pages/QuizCreator';
+import QuizManager from './pages/QuizManager';
+import Certificate from './pages/Certificate';
+import UserSubscription from './pages/UserSubscription';
+
 
 function App() {
   return (
@@ -111,7 +119,24 @@ function App() {
                       </ProtectedRoute>
                     } 
                   />
-                  
+
+                    <Route 
+                    path="/certificate/:id" 
+                    element={
+                      <ProtectedRoute>
+                        <Certificate />
+                      </ProtectedRoute>
+                    } 
+                  />
+                    <Route 
+                    path="/my-subscription" 
+                    element={
+                      <ProtectedRoute>
+                        <UserSubscription />
+                      </ProtectedRoute>
+                    } 
+                  />
+                
                   {/* Routes Instructeur - Authentification Requise */}
                   <Route 
                     path="/video-sessions" 
@@ -137,6 +162,38 @@ function App() {
                       </ProtectedRoute>
                     } 
                   />
+                  <Route 
+                    path="/admin/quizzes" 
+                    element={
+                      <ProtectedRoute roles={['instructor', 'admin']}>
+                        <QuizManager />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/quizzes/new" 
+                    element={
+                      <ProtectedRoute roles={['instructor', 'admin']}>
+                        <QuizCreator />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/quizzes/:id/edit" 
+                    element={
+                      <ProtectedRoute roles={['instructor', 'admin']}>
+                        <QuizCreator />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/courses/:courseId/quiz/new" 
+                    element={
+                      <ProtectedRoute roles={['instructor', 'admin']}>
+                        <QuizCreator />
+                      </ProtectedRoute>
+                    } 
+                  />
                   
                   {/* Routes Admin - Authentification Requise */}
                   <Route 
@@ -144,6 +201,22 @@ function App() {
                     element={
                       <ProtectedRoute roles={['admin']}>
                         <AdminDashboard />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/courses/new" 
+                    element={
+                      <ProtectedRoute roles={['admin']}>
+                        <AdminCourseCreate />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/lessons/new" 
+                    element={
+                      <ProtectedRoute roles={['admin']}>
+                        <AdminLessonCreate />
                       </ProtectedRoute>
                     } 
                   />
@@ -160,6 +233,14 @@ function App() {
                     element={
                       <ProtectedRoute roles={['admin', 'instructor']}>
                         <AdminLessonManager />
+                      </ProtectedRoute>
+                    } 
+                  />
+                  <Route 
+                    path="/admin/users" 
+                    element={
+                      <ProtectedRoute roles={['admin']}>
+                        <AdminUserManagement />
                       </ProtectedRoute>
                     } 
                   />

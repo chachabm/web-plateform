@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { 
   BookOpen, 
   Plus, 
@@ -19,7 +19,8 @@ import {
   ArrowLeft,
   Save,
   CheckCircle,
-  XCircle
+  XCircle,
+  HelpCircle
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { mockCourses } from '../data/mockData';
@@ -239,6 +240,14 @@ const TeacherCourseManagement: React.FC = () => {
     });
   };
 
+  const handleCreateQuiz = (courseId: string) => {
+    navigate(`/admin/courses/${courseId}/quiz/new`);
+  };
+
+  const handleManageQuizzes = () => {
+    navigate('/admin/quizzes');
+  };
+
   const languages = [...new Set(mockCourses.map(course => course.language))];
   const levels = ['Débutant', 'Intermédiaire', 'Avancé'];
 
@@ -259,13 +268,22 @@ const TeacherCourseManagement: React.FC = () => {
               <p className="text-gray-600">Créez et gérez vos cours d'enseignement</p>
             </div>
           </div>
-          <button
-            onClick={handleCreateCourse}
-            className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
-          >
-            <Plus className="h-5 w-5" />
-            <span>Créer un Cours</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleManageQuizzes}
+              className="bg-secondary-600 text-white px-4 py-2 rounded-lg hover:bg-secondary-700 transition-colors flex items-center space-x-2"
+            >
+              <HelpCircle className="h-5 w-5" />
+              <span>Gérer les Quiz</span>
+            </button>
+            <button
+              onClick={handleCreateCourse}
+              className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
+            >
+              <Plus className="h-5 w-5" />
+              <span>Créer un Cours</span>
+            </button>
+          </div>
         </div>
 
         {/* Message de succès */}
@@ -612,6 +630,13 @@ const TeacherCourseManagement: React.FC = () => {
                                   >
                                     <Video className="h-4 w-4 mr-3" />
                                     Gérer les Leçons
+                                  </button>
+                                  <button
+                                    onClick={() => handleCreateQuiz(course.id)}
+                                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                                  >
+                                    <HelpCircle className="h-4 w-4 mr-3" />
+                                    Créer un Quiz
                                   </button>
                                   <button
                                     onClick={() => navigate(`/admin/courses/${course.id}/edit`)}

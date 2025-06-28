@@ -1,33 +1,23 @@
 import React, { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   ArrowLeft, 
   Plus, 
   Edit, 
   Trash2, 
-  Upload, 
-  Play, 
+  Eye, 
+  EyeOff, 
+  GripVertical, 
+  Video, 
+  FileText, 
+  Clock,
   Save,
-  Eye,
-  EyeOff,
-  GripVertical,
-  Video,
-  FileText,
-  Clock
+  CheckCircle,
+  XCircle,
+  HelpCircle
 } from 'lucide-react';
-
-interface Lesson {
-  id: string;
-  title: string;
-  description: string;
-  duration: string;
-  videoUrl: string;
-  videoFile?: File;
-  resources: Resource[];
-  order: number;
-  isPublished: boolean;
-  isPreview: boolean;
-}
+import { mockCourses } from '../data/mockData';
+import LessonEditor from '../components/Course/LessonEditor';
 
 interface Resource {
   id: string;
@@ -37,558 +27,627 @@ interface Resource {
   size: string;
 }
 
+interface Lesson {
+  id: string;
+  title: string;
+  description: string;
+  videoUrl: string;
+  duration: string;
+  resources: Resource[];
+  isPreview: boolean;
+  isPublished: boolean;
+}
+
+interface Section {
+  id: string;
+  title: string;
+  order: number;
+  lessons: Lesson[];
+}
+
 const AdminLessonManager: React.FC = () => {
   const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   
-  const [lessons, setLessons] = useState<Lesson[]>([
+  const course = mockCourses.find(c => c.id === courseId);
+  
+  const [sections, setSections] = useState<Section[]>([
     {
       id: '1',
-      title: 'Welcome to Spanish Basics',
-      description: 'Introduction to the Spanish language and course overview',
-      duration: '5:30',
-      videoUrl: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
-      resources: [
-        { id: '1', name: 'Course Syllabus.pdf', type: 'pdf', url: '#', size: '2.5 MB' },
-        { id: '2', name: 'Vocabulary List.doc', type: 'doc', url: '#', size: '1.2 MB' }
-      ],
+      title: 'Introduction',
       order: 1,
-      isPublished: true,
-      isPreview: true
+      lessons: [
+        {
+          id: '1',
+          title: 'Bienvenue au Cours',
+          description: 'Introduction au cours et ce que vous allez apprendre',
+          videoUrl: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_1mb.mp4',
+          duration: '5:30',
+          resources: [
+            { id: '1', name: 'Programme du Cours.pdf', type: 'pdf', url: '#', size: '2.5 MB' },
+            { id: '2', name: 'Liste de Vocabulaire.doc', type: 'doc', url: '#', size: '1.2 MB' }
+          ],
+          isPreview: true,
+          isPublished: true
+        },
+        {
+          id: '2',
+          title: 'Aperçu du Cours',
+          description: 'Aperçu de la structure du cours et du parcours d\'apprentissage',
+          videoUrl: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4',
+          duration: '8:15',
+          resources: [],
+          isPreview: false,
+          isPublished: true
+        }
+      ]
     },
     {
       id: '2',
-      title: 'Spanish Alphabet and Pronunciation',
-      description: 'Learn the Spanish alphabet and basic pronunciation rules',
-      duration: '12:45',
-      videoUrl: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_2mb.mp4',
-      resources: [
-        { id: '3', name: 'Pronunciation Guide.pdf', type: 'pdf', url: '#', size: '3.1 MB' }
-      ],
+      title: 'Fondamentaux',
       order: 2,
-      isPublished: true,
-      isPreview: false
-    },
-    {
-      id: '3',
-      title: 'Basic Greetings and Introductions',
-      description: 'Common Spanish greetings and how to introduce yourself',
-      duration: '8:20',
-      videoUrl: '',
-      resources: [],
-      order: 3,
-      isPublished: false,
-      isPreview: false
+      lessons: [
+        {
+          id: '3',
+          title: 'Concepts de Base',
+          description: 'Apprendre les concepts fondamentaux',
+          videoUrl: 'https://sample-videos.com/zip/10/mp4/SampleVideo_1280x720_5mb.mp4',
+          duration: '15:20',
+          resources: [],
+          isPreview: false,
+          isPublished: false
+        }
+      ]
     }
   ]);
 
   const [editingLesson, setEditingLesson] = useState<Lesson | null>(null);
-  const [showLessonForm, setShowLessonForm] = useState(false);
-  const [draggedLesson, setDraggedLesson] = useState<string | null>(null);
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
+  const [editingSectionTitle, setEditingSectionTitle] = useState('');
+  const [showLessonEditor, setShowLessonEditor] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<{type: 'section' | 'lesson', id: string, sectionId?: string} | null>(null);
+  const [successMessage, setSuccessMessage] = useState('');
 
-  const createNewLesson = () => {
+  if (!course) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Cours Non Trouvé</h1>
+          <button
+            onClick={() => navigate('/teacher/courses')}
+            className="text-primary-600 hover:text-primary-700"
+          >
+            Retour à Mes Cours
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const handleAddSection = () => {
+    const newSection: Section = {
+      id: Date.now().toString(),
+      title: 'Nouvelle Section',
+      order: sections.length + 1,
+      lessons: []
+    };
+    
+    setSections([...sections, newSection]);
+    setEditingSectionId(newSection.id);
+    setEditingSectionTitle('Nouvelle Section');
+    
+    // Afficher un message de succès
+    setSuccessMessage('Section ajoutée avec succès');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleEditSectionTitle = (sectionId: string, title: string) => {
+    setEditingSectionId(sectionId);
+    setEditingSectionTitle(title);
+  };
+
+  const handleSaveSectionTitle = () => {
+    if (!editingSectionId) return;
+    
+    setSections(sections.map(section => 
+      section.id === editingSectionId 
+        ? { ...section, title: editingSectionTitle } 
+        : section
+    ));
+    
+    setEditingSectionId(null);
+    setEditingSectionTitle('');
+    
+    // Afficher un message de succès
+    setSuccessMessage('Titre de section mis à jour');
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const handleDeleteSection = (sectionId: string) => {
+    setShowDeleteConfirm({
+      type: 'section',
+      id: sectionId
+    });
+  };
+
+  const handleAddLesson = (sectionId: string) => {
     const newLesson: Lesson = {
       id: Date.now().toString(),
-      title: 'New Lesson',
+      title: 'Nouvelle Leçon',
       description: '',
-      duration: '0:00',
       videoUrl: '',
+      duration: '0:00',
       resources: [],
-      order: lessons.length + 1,
-      isPublished: false,
-      isPreview: false
+      isPreview: false,
+      isPublished: false
     };
+    
     setEditingLesson(newLesson);
-    setShowLessonForm(true);
+    setEditingSectionId(sectionId);
+    setShowLessonEditor(true);
   };
 
-  const saveLesson = (lesson: Lesson) => {
-    if (lessons.find(l => l.id === lesson.id)) {
-      setLessons(lessons.map(l => l.id === lesson.id ? lesson : l));
+  const handleEditLesson = (lesson: Lesson, sectionId: string) => {
+    setEditingLesson(lesson);
+    setEditingSectionId(sectionId);
+    setShowLessonEditor(true);
+  };
+
+  const handleSaveLesson = (updatedLesson: Lesson) => {
+    if (!editingSectionId) return;
+    
+    const sectionIndex = sections.findIndex(section => section.id === editingSectionId);
+    if (sectionIndex === -1) return;
+    
+    const section = sections[sectionIndex];
+    const lessonIndex = section.lessons.findIndex(lesson => lesson.id === updatedLesson.id);
+    
+    const updatedSections = [...sections];
+    
+    if (lessonIndex === -1) {
+      // Nouvelle leçon
+      updatedSections[sectionIndex] = {
+        ...section,
+        lessons: [...section.lessons, updatedLesson]
+      };
     } else {
-      setLessons([...lessons, lesson]);
+      // Mise à jour d'une leçon existante
+      const updatedLessons = [...section.lessons];
+      updatedLessons[lessonIndex] = updatedLesson;
+      updatedSections[sectionIndex] = {
+        ...section,
+        lessons: updatedLessons
+      };
     }
+    
+    setSections(updatedSections);
+    setShowLessonEditor(false);
     setEditingLesson(null);
-    setShowLessonForm(false);
+    setEditingSectionId(null);
+    
+    // Afficher un message de succès
+    setSuccessMessage('Leçon enregistrée avec succès');
+    setTimeout(() => setSuccessMessage(''), 3000);
   };
 
-  const deleteLesson = (lessonId: string) => {
-    if (confirm('Are you sure you want to delete this lesson?')) {
-      setLessons(lessons.filter(l => l.id !== lessonId));
-    }
-  };
-
-  const togglePublished = (lessonId: string) => {
-    setLessons(lessons.map(lesson =>
-      lesson.id === lessonId ? { ...lesson, isPublished: !lesson.isPublished } : lesson
-    ));
-  };
-
-  const togglePreview = (lessonId: string) => {
-    setLessons(lessons.map(lesson =>
-      lesson.id === lessonId ? { ...lesson, isPreview: !lesson.isPreview } : lesson
-    ));
-  };
-
-  const handleDragStart = (lessonId: string) => {
-    setDraggedLesson(lessonId);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent, targetLessonId: string) => {
-    e.preventDefault();
-    if (!draggedLesson || draggedLesson === targetLessonId) return;
-
-    const draggedIndex = lessons.findIndex(l => l.id === draggedLesson);
-    const targetIndex = lessons.findIndex(l => l.id === targetLessonId);
-
-    const newLessons = [...lessons];
-    const [draggedItem] = newLessons.splice(draggedIndex, 1);
-    newLessons.splice(targetIndex, 0, draggedItem);
-
-    // Update order
-    newLessons.forEach((lesson, index) => {
-      lesson.order = index + 1;
+  const handleDeleteLesson = (lessonId: string, sectionId: string) => {
+    setShowDeleteConfirm({
+      type: 'lesson',
+      id: lessonId,
+      sectionId
     });
-
-    setLessons(newLessons);
-    setDraggedLesson(null);
   };
+
+  const confirmDelete = () => {
+    if (!showDeleteConfirm) return;
+    
+    if (showDeleteConfirm.type === 'section') {
+      setSections(sections.filter(section => section.id !== showDeleteConfirm.id));
+      setSuccessMessage('Section supprimée avec succès');
+    } else if (showDeleteConfirm.type === 'lesson' && showDeleteConfirm.sectionId) {
+      const sectionIndex = sections.findIndex(section => section.id === showDeleteConfirm.sectionId);
+      if (sectionIndex !== -1) {
+        const updatedSections = [...sections];
+        updatedSections[sectionIndex] = {
+          ...updatedSections[sectionIndex],
+          lessons: updatedSections[sectionIndex].lessons.filter(lesson => lesson.id !== showDeleteConfirm.id)
+        };
+        setSections(updatedSections);
+        setSuccessMessage('Leçon supprimée avec succès');
+      }
+    }
+    
+    setShowDeleteConfirm(null);
+    setTimeout(() => setSuccessMessage(''), 3000);
+  };
+
+  const toggleLessonPublished = (lessonId: string, sectionId: string) => {
+    const sectionIndex = sections.findIndex(section => section.id === sectionId);
+    if (sectionIndex === -1) return;
+    
+    const section = sections[sectionIndex];
+    const lessonIndex = section.lessons.findIndex(lesson => lesson.id === lessonId);
+    if (lessonIndex === -1) return;
+    
+    const updatedSections = [...sections];
+    const updatedLessons = [...section.lessons];
+    updatedLessons[lessonIndex] = {
+      ...updatedLessons[lessonIndex],
+      isPublished: !updatedLessons[lessonIndex].isPublished
+    };
+    
+    updatedSections[sectionIndex] = {
+      ...section,
+      lessons: updatedLessons
+    };
+    
+    setSections(updatedSections);
+  };
+
+  const toggleLessonPreview = (lessonId: string, sectionId: string) => {
+    const sectionIndex = sections.findIndex(section => section.id === sectionId);
+    if (sectionIndex === -1) return;
+    
+    const section = sections[sectionIndex];
+    const lessonIndex = section.lessons.findIndex(lesson => lesson.id === lessonId);
+    if (lessonIndex === -1) return;
+    
+    const updatedSections = [...sections];
+    const updatedLessons = [...section.lessons];
+    updatedLessons[lessonIndex] = {
+      ...updatedLessons[lessonIndex],
+      isPreview: !updatedLessons[lessonIndex].isPreview
+    };
+    
+    updatedSections[sectionIndex] = {
+      ...section,
+      lessons: updatedLessons
+    };
+    
+    setSections(updatedSections);
+  };
+
+  const handleCreateQuiz = () => {
+    navigate(`/admin/courses/${courseId}/quiz/new`);
+  };
+
+  const totalLessons = sections.reduce((total, section) => total + section.lessons.length, 0);
+  const publishedLessons = sections.reduce((total, section) => 
+    total + section.lessons.filter(lesson => lesson.isPublished).length, 0
+  );
+  const previewLessons = sections.reduce((total, section) => 
+    total + section.lessons.filter(lesson => lesson.isPreview).length, 0
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <button
-                onClick={() => navigate('/admin')}
-                className="text-gray-600 hover:text-gray-900"
-              >
-                <ArrowLeft className="h-6 w-6" />
-              </button>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">Lesson Manager</h1>
-                <p className="text-gray-600">Course: Spanish Basics</p>
-              </div>
-            </div>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* En-tête */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-4">
             <button
-              onClick={createNewLesson}
-              className="flex items-center space-x-2 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700"
+              onClick={() => navigate('/teacher/courses')}
+              className="p-2 text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="h-6 w-6" />
+            </button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Gestion des Leçons</h1>
+              <p className="text-gray-600">Cours: {course.title}</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <button
+              onClick={handleCreateQuiz}
+              className="bg-secondary-600 text-white px-4 py-2 rounded-lg hover:bg-secondary-700 transition-colors flex items-center space-x-2"
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span>Créer un Quiz</span>
+            </button>
+            <button
+              onClick={handleAddSection}
+              className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
             >
               <Plus className="h-4 w-4" />
-              <span>Add Lesson</span>
+              <span>Ajouter une Section</span>
             </button>
           </div>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Message de succès */}
+        {successMessage && (
+          <div className="bg-green-100 border border-green-200 text-green-800 px-4 py-3 rounded-lg mb-6 flex items-center">
+            <CheckCircle className="h-5 w-5 mr-2" />
+            {successMessage}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Lessons List */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-semibold text-gray-900">
-                  Course Lessons ({lessons.length})
-                </h2>
-                <div className="text-sm text-gray-500">
-                  {lessons.filter(l => l.isPublished).length} published
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                {lessons.map((lesson) => (
-                  <div
-                    key={lesson.id}
-                    draggable
-                    onDragStart={() => handleDragStart(lesson.id)}
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, lesson.id)}
-                    className="border border-gray-200 rounded-lg p-4 hover:border-primary-200 transition-colors cursor-move"
-                  >
-                    <div className="flex items-center space-x-4">
-                      <GripVertical className="h-5 w-5 text-gray-400" />
-                      
-                      <div className="flex-1">
-                        <div className="flex items-center space-x-3 mb-2">
-                          <h3 className="font-medium text-gray-900">{lesson.title}</h3>
-                          <div className="flex items-center space-x-2">
-                            {lesson.isPublished ? (
-                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-success-100 text-success-800">
-                                Published
-                              </span>
-                            ) : (
-                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
-                                Draft
-                              </span>
-                            )}
-                            {lesson.isPreview && (
-                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                                Preview
-                              </span>
-                            )}
-                          </div>
+          {/* Liste des Sections et Leçons */}
+          <div className="lg:col-span-2 space-y-6">
+            {sections.map((section) => (
+              <div key={section.id} className="bg-white rounded-xl shadow-lg overflow-hidden">
+                {/* En-tête de Section */}
+                <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <GripVertical className="h-5 w-5 text-gray-400 cursor-move" />
+                      {editingSectionId === section.id ? (
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="text"
+                            value={editingSectionTitle}
+                            onChange={(e) => setEditingSectionTitle(e.target.value)}
+                            className="px-2 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            autoFocus
+                          />
+                          <button
+                            onClick={handleSaveSectionTitle}
+                            className="text-primary-600 hover:text-primary-700"
+                          >
+                            <Save className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => setEditingSectionId(null)}
+                            className="text-gray-600 hover:text-gray-700"
+                          >
+                            <XCircle className="h-4 w-4" />
+                          </button>
                         </div>
-                        
-                        <p className="text-sm text-gray-600 mb-2">{lesson.description}</p>
-                        
-                        <div className="flex items-center space-x-4 text-sm text-gray-500">
-                          <div className="flex items-center space-x-1">
-                            <Clock className="h-4 w-4" />
-                            <span>{lesson.duration}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Video className="h-4 w-4" />
-                            <span>{lesson.videoUrl ? 'Video uploaded' : 'No video'}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <FileText className="h-4 w-4" />
-                            <span>{lesson.resources.length} resources</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2">
-                        <button
-                          onClick={() => togglePreview(lesson.id)}
-                          className={`p-2 rounded-lg ${
-                            lesson.isPreview 
-                              ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
-                              : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
-                          }`}
-                          title={lesson.isPreview ? 'Remove from preview' : 'Make preview'}
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        
-                        <button
-                          onClick={() => togglePublished(lesson.id)}
-                          className={`p-2 rounded-lg ${
-                            lesson.isPublished 
-                              ? 'text-success-600 bg-success-50 hover:bg-success-100' 
-                              : 'text-gray-400 hover:text-success-600 hover:bg-success-50'
-                          }`}
-                          title={lesson.isPublished ? 'Unpublish' : 'Publish'}
-                        >
-                          {lesson.isPublished ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                        </button>
-                        
-                        <button
-                          onClick={() => {
-                            setEditingLesson(lesson);
-                            setShowLessonForm(true);
-                          }}
-                          className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
-                        
-                        <button
-                          onClick={() => deleteLesson(lesson.id)}
-                          className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                      ) : (
+                        <h3 className="text-lg font-semibold text-gray-900">{section.title}</h3>
+                      )}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleEditSectionTitle(section.id, section.title)}
+                        className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                        title="Modifier le titre"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleAddLesson(section.id)}
+                        className="p-2 text-primary-600 hover:text-primary-700 transition-colors"
+                        title="Ajouter une leçon"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteSection(section.id)}
+                        className="p-2 text-red-600 hover:text-red-700 transition-colors"
+                        title="Supprimer la section"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
-                ))}
-
-                {lessons.length === 0 && (
-                  <div className="text-center py-12">
-                    <Video className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No lessons yet</h3>
-                    <p className="text-gray-600 mb-6">Start building your course by adding your first lesson</p>
-                    <button
-                      onClick={createNewLesson}
-                      className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700"
-                    >
-                      Create First Lesson
-                    </button>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Lesson Form */}
-          <div className="space-y-6">
-            {showLessonForm && editingLesson && (
-              <LessonForm
-                lesson={editingLesson}
-                onSave={saveLesson}
-                onCancel={() => {
-                  setEditingLesson(null);
-                  setShowLessonForm(false);
-                }}
-              />
-            )}
-
-            {!showLessonForm && (
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Course Statistics</h3>
-                <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total Lessons</span>
-                    <span className="font-medium">{lessons.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Published</span>
-                    <span className="font-medium">{lessons.filter(l => l.isPublished).length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Preview Lessons</span>
-                    <span className="font-medium">{lessons.filter(l => l.isPreview).length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total Duration</span>
-                    <span className="font-medium">
-                      {lessons.reduce((total, lesson) => {
-                        const [minutes, seconds] = lesson.duration.split(':').map(Number);
-                        return total + minutes + (seconds / 60);
-                      }, 0).toFixed(0)} min
-                    </span>
-                  </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
 
-// Lesson Form Component
-interface LessonFormProps {
-  lesson: Lesson;
-  onSave: (lesson: Lesson) => void;
-  onCancel: () => void;
-}
+                {/* Leçons */}
+                <div className="divide-y divide-gray-200">
+                  {section.lessons.map((lesson) => (
+                    <div key={lesson.id} className="px-6 py-4 hover:bg-gray-50">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3 flex-1">
+                          <GripVertical className="h-4 w-4 text-gray-400 cursor-move" />
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-1">
+                              <h4 className="font-medium text-gray-900">{lesson.title}</h4>
+                              <div className="flex items-center space-x-2">
+                                {lesson.isPublished ? (
+                                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-success-100 text-success-800">
+                                    Publié
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">
+                                    Brouillon
+                                  </span>
+                                )}
+                                {lesson.isPreview && (
+                                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    Prévisualisation
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            <p className="text-sm text-gray-600 mb-2">{lesson.description}</p>
+                            
+                            <div className="flex items-center space-x-4 text-sm text-gray-500">
+                              <div className="flex items-center space-x-1">
+                                <Clock className="h-4 w-4" />
+                                <span>{lesson.duration}</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <Video className="h-4 w-4" />
+                                <span>{lesson.videoUrl ? 'Vidéo téléchargée' : 'Pas de vidéo'}</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <FileText className="h-4 w-4" />
+                                <span>{lesson.resources.length} ressources</span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
 
-const LessonForm: React.FC<LessonFormProps> = ({ lesson, onSave, onCancel }) => {
-  const [formData, setFormData] = useState<Lesson>(lesson);
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSave(formData);
-  };
-
-  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setVideoFile(file);
-      // In a real app, you would upload the file and get a URL
-      setFormData({ ...formData, videoUrl: URL.createObjectURL(file) });
-    }
-  };
-
-  const addResource = () => {
-    const newResource: Resource = {
-      id: Date.now().toString(),
-      name: 'New Resource',
-      type: 'pdf',
-      url: '',
-      size: '0 MB'
-    };
-    setFormData({
-      ...formData,
-      resources: [...formData.resources, newResource]
-    });
-  };
-
-  const updateResource = (resourceId: string, updates: Partial<Resource>) => {
-    setFormData({
-      ...formData,
-      resources: formData.resources.map(resource =>
-        resource.id === resourceId ? { ...resource, ...updates } : resource
-      )
-    });
-  };
-
-  const removeResource = (resourceId: string) => {
-    setFormData({
-      ...formData,
-      resources: formData.resources.filter(resource => resource.id !== resourceId)
-    });
-  };
-
-  return (
-    <div className="bg-white rounded-xl shadow-lg p-6">
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">
-        {lesson.id ? 'Edit Lesson' : 'Create New Lesson'}
-      </h3>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Lesson Title
-          </label>
-          <input
-            type="text"
-            value={formData.title}
-            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            required
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Description
-          </label>
-          <textarea
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={3}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Duration
-          </label>
-          <input
-            type="text"
-            value={formData.duration}
-            onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
-            placeholder="e.g., 10:30"
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-          />
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Video
-          </label>
-          <div className="space-y-3">
-            {formData.videoUrl && (
-              <div className="bg-gray-50 p-3 rounded-lg">
-                <div className="flex items-center space-x-2">
-                  <Video className="h-4 w-4 text-gray-600" />
-                  <span className="text-sm text-gray-600">Video uploaded</span>
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => toggleLessonPreview(lesson.id, section.id)}
+                            className={`p-2 rounded-lg transition-colors ${
+                              lesson.isPreview 
+                                ? 'text-blue-600 bg-blue-50 hover:bg-blue-100' 
+                                : 'text-gray-400 hover:text-blue-600 hover:bg-blue-50'
+                            }`}
+                            title={lesson.isPreview ? 'Retirer de la prévisualisation' : 'Définir comme prévisualisation'}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          
+                          <button
+                            onClick={() => toggleLessonPublished(lesson.id, section.id)}
+                            className={`p-2 rounded-lg transition-colors ${
+                              lesson.isPublished 
+                                ? 'text-success-600 bg-success-50 hover:bg-success-100' 
+                                : 'text-gray-400 hover:text-success-600 hover:bg-success-50'
+                            }`}
+                            title={lesson.isPublished ? 'Dépublier' : 'Publier'}
+                          >
+                            {lesson.isPublished ? <CheckCircle className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                          </button>
+                          
+                          <button
+                            onClick={() => handleEditLesson(lesson, section.id)}
+                            className="p-2 text-gray-400 hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                            title="Modifier la leçon"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
+                          
+                          <button
+                            onClick={() => handleDeleteLesson(lesson.id, section.id)}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Supprimer la leçon"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {section.lessons.length === 0 && (
+                    <div className="px-6 py-8 text-center">
+                      <Video className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-500 mb-3">Aucune leçon dans cette section</p>
+                      <button
+                        onClick={() => handleAddLesson(section.id)}
+                        className="text-primary-600 hover:text-primary-700 font-medium"
+                      >
+                        Ajouter votre première leçon
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-            <div className="flex items-center space-x-3">
-              <input
-                type="file"
-                accept="video/*"
-                onChange={handleVideoUpload}
-                className="hidden"
-                id="video-upload"
-              />
-              <label
-                htmlFor="video-upload"
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer"
-              >
-                <Upload className="h-4 w-4" />
-                <span>Upload Video</span>
-              </label>
-              <span className="text-sm text-gray-500">or</span>
-              <input
-                type="url"
-                value={formData.videoUrl}
-                onChange={(e) => setFormData({ ...formData, videoUrl: e.target.value })}
-                placeholder="Video URL"
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <label className="block text-sm font-medium text-gray-700">
-              Resources
-            </label>
-            <button
-              type="button"
-              onClick={addResource}
-              className="text-primary-600 hover:text-primary-700 text-sm font-medium"
-            >
-              Add Resource
-            </button>
-          </div>
-          <div className="space-y-2">
-            {formData.resources.map((resource) => (
-              <div key={resource.id} className="flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={resource.name}
-                  onChange={(e) => updateResource(resource.id, { name: e.target.value })}
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  placeholder="Resource name"
-                />
-                <select
-                  value={resource.type}
-                  onChange={(e) => updateResource(resource.id, { type: e.target.value as Resource['type'] })}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                >
-                  <option value="pdf">PDF</option>
-                  <option value="doc">Document</option>
-                  <option value="video">Video</option>
-                  <option value="audio">Audio</option>
-                  <option value="other">Other</option>
-                </select>
-                <button
-                  type="button"
-                  onClick={() => removeResource(resource.id)}
-                  className="p-2 text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
               </div>
             ))}
+
+            {sections.length === 0 && (
+              <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+                <Video className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune section</h3>
+                <p className="text-gray-600 mb-6">Commencez à structurer votre cours en ajoutant des sections</p>
+                <button
+                  onClick={handleAddSection}
+                  className="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition-colors"
+                >
+                  Ajouter une Section
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Éditeur de Leçon ou Statistiques */}
+          <div className="space-y-6">
+            {showLessonEditor && editingLesson ? (
+              <LessonEditor
+                lesson={editingLesson}
+                onSave={handleSaveLesson}
+                onCancel={() => {
+                  setShowLessonEditor(false);
+                  setEditingLesson(null);
+                }}
+              />
+            ) : (
+              <>
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Statistiques du Cours</h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Total des Leçons</span>
+                      <span className="font-medium">{totalLessons}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Leçons Publiées</span>
+                      <span className="font-medium">{publishedLessons}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Leçons en Prévisualisation</span>
+                      <span className="font-medium">{previewLessons}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Sections</span>
+                      <span className="font-medium">{sections.length}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-xl shadow-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Actions Rapides</h3>
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleAddSection}
+                      className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                    >
+                      <Plus className="h-5 w-5 text-primary-600" />
+                      <span className="font-medium text-gray-900">Ajouter une Section</span>
+                    </button>
+                    <button
+                      onClick={handleCreateQuiz}
+                      className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                    >
+                      <HelpCircle className="h-5 w-5 text-secondary-600" />
+                      <span className="font-medium text-gray-900">Créer un Quiz</span>
+                    </button>
+                    <button
+                      onClick={() => navigate(`/course/${course.id}`)}
+                      className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                    >
+                      <Eye className="h-5 w-5 text-secondary-600" />
+                      <span className="font-medium text-gray-900">Prévisualiser le Cours</span>
+                    </button>
+                    <button
+                      onClick={() => navigate(`/admin/courses/${course.id}/edit`)}
+                      className="w-full flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                    >
+                      <Edit className="h-5 w-5 text-success-600" />
+                      <span className="font-medium text-gray-900">Modifier les Détails du Cours</span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        <div className="flex items-center space-x-4">
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={formData.isPublished}
-              onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-            />
-            <span className="text-sm text-gray-700">Published</span>
-          </label>
-          
-          <label className="flex items-center space-x-2">
-            <input
-              type="checkbox"
-              checked={formData.isPreview}
-              onChange={(e) => setFormData({ ...formData, isPreview: e.target.checked })}
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-            />
-            <span className="text-sm text-gray-700">Preview Lesson</span>
-          </label>
-        </div>
-
-        <div className="flex items-center space-x-3 pt-4">
-          <button
-            type="submit"
-            className="flex items-center space-x-2 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700"
-          >
-            <Save className="h-4 w-4" />
-            <span>Save Lesson</span>
-          </button>
-          <button
-            type="button"
-            onClick={onCancel}
-            className="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
+        {/* Confirmation de suppression */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">Confirmer la suppression</h3>
+              <p className="text-gray-700 mb-6">
+                {showDeleteConfirm.type === 'section' 
+                  ? 'Êtes-vous sûr de vouloir supprimer cette section ? Toutes les leçons qu\'elle contient seront également supprimées.' 
+                  : 'Êtes-vous sûr de vouloir supprimer cette leçon ? Cette action est irréversible.'}
+              </p>
+              <div className="flex items-center space-x-3 justify-end">
+                <button
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={confirmDelete}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Supprimer
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

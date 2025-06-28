@@ -32,17 +32,38 @@ const AdminDashboard: React.FC = () => {
     monthlyGrowth: 12.5
   };
 
-  const recentActivity = [
-    { id: 1, type: 'course', action: 'created', item: 'Advanced Spanish Grammar', user: 'Maria Rodriguez', time: '2 hours ago' },
-    { id: 2, type: 'student', action: 'enrolled', item: 'French Conversation', user: 'John Smith', time: '4 hours ago' },
-    { id: 3, type: 'lesson', action: 'updated', item: 'German Pronunciation - Lesson 5', user: 'Hans Mueller', time: '6 hours ago' },
-    { id: 4, type: 'review', action: 'submitted', item: 'Italian Basics', user: 'Emma Wilson', time: '8 hours ago' },
-  ];
-
   const filteredCourses = mockCourses.filter(course =>
     course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     course.instructor.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  // Mock certificates data
+  const certificates = [
+    {
+      id: '1',
+      studentName: 'Jean Dupont',
+      studentEmail: 'jean@example.com',
+      courseTitle: 'Espagnol Complet pour Débutants',
+      issueDate: '2025-01-10T14:30:00Z',
+      completionDate: '2025-01-08T11:20:00Z'
+    },
+    {
+      id: '2',
+      studentName: 'Sophie Martin',
+      studentEmail: 'sophie@example.com',
+      courseTitle: 'Maîtrise de la Conversation Française',
+      issueDate: '2025-01-05T09:15:00Z',
+      completionDate: '2025-01-03T16:45:00Z'
+    },
+    {
+      id: '3',
+      studentName: 'Michel Blanc',
+      studentEmail: 'michel@example.com',
+      courseTitle: 'Grammaire et Structure Allemandes',
+      issueDate: '2024-12-20T10:30:00Z',
+      completionDate: '2024-12-18T14:20:00Z'
+    }
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -146,6 +167,7 @@ const AdminDashboard: React.FC = () => {
               { id: 'courses', label: 'Courses' },
               { id: 'lessons', label: 'Lessons' },
               { id: 'users', label: 'Users' },
+              { id: 'certificates', label: 'Certificates' },
               { id: 'analytics', label: 'Analytics' }
             ].map((tab) => (
               <button
@@ -166,85 +188,102 @@ const AdminDashboard: React.FC = () => {
         {/* Tab Content */}
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Recent Activity */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Recent Activity</h2>
-                <div className="space-y-4">
-                  {recentActivity.map((activity) => (
-                    <div key={activity.id} className="flex items-start space-x-4 p-4 hover:bg-gray-50 rounded-lg">
-                      <div className={`p-2 rounded-lg ${
-                        activity.type === 'course' ? 'bg-primary-100' :
-                        activity.type === 'student' ? 'bg-secondary-100' :
-                        activity.type === 'lesson' ? 'bg-success-100' : 'bg-orange-100'
-                      }`}>
-                        {activity.type === 'course' && <BookOpen className="h-4 w-4 text-primary-600" />}
-                        {activity.type === 'student' && <Users className="h-4 w-4 text-secondary-600" />}
-                        {activity.type === 'lesson' && <Video className="h-4 w-4 text-success-600" />}
-                        {activity.type === 'review' && <Award className="h-4 w-4 text-orange-600" />}
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">
-                          {activity.user} {activity.action} "{activity.item}"
-                        </p>
-                        <p className="text-xs text-gray-500">{activity.time}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
             {/* Quick Actions */}
-            <div className="space-y-6">
+            <div className="lg:col-span-3 space-y-6">
               <div className="bg-white rounded-xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Quick Actions</h2>
-                <div className="space-y-3">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">Quick Actions</h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <Link
                     to="/admin/courses/new"
-                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="bg-white border border-gray-200 rounded-xl p-6 hover:border-primary-300 hover:shadow-md transition-all"
                   >
-                    <Plus className="h-5 w-5 text-primary-600" />
-                    <span className="font-medium text-gray-900">Create New Course</span>
+                    <div className="bg-primary-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                      <BookOpen className="h-6 w-6 text-primary-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Create New Course</h3>
+                    <p className="text-gray-600 text-sm">Add a new course to your platform with detailed content and structure.</p>
                   </Link>
+                  
                   <Link
                     to="/admin/lessons/new"
-                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="bg-white border border-gray-200 rounded-xl p-6 hover:border-secondary-300 hover:shadow-md transition-all"
                   >
-                    <Video className="h-5 w-5 text-secondary-600" />
-                    <span className="font-medium text-gray-900">Add New Lesson</span>
+                    <div className="bg-secondary-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                      <Video className="h-6 w-6 text-secondary-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Add New Lesson</h3>
+                    <p className="text-gray-600 text-sm">Create engaging video lessons with resources and interactive content.</p>
                   </Link>
+                  
                   <Link
                     to="/admin/users"
-                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
+                    className="bg-white border border-gray-200 rounded-xl p-6 hover:border-success-300 hover:shadow-md transition-all"
                   >
-                    <Users className="h-5 w-5 text-success-600" />
-                    <span className="font-medium text-gray-900">Manage Users</span>
-                  </Link>
-                  <Link
-                    to="/admin/reports"
-                    className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <Download className="h-5 w-5 text-orange-600" />
-                    <span className="font-medium text-gray-900">Export Reports</span>
+                    <div className="bg-success-100 w-12 h-12 rounded-lg flex items-center justify-center mb-4">
+                      <Users className="h-6 w-6 text-success-600" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Manage Users</h3>
+                    <p className="text-gray-600 text-sm">View and manage student and instructor accounts on your platform.</p>
                   </Link>
                 </div>
               </div>
-
-              <div className="bg-gradient-to-r from-primary-600 to-secondary-600 rounded-xl p-6 text-white">
-                <h3 className="font-semibold mb-2">Platform Health</h3>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-primary-100">Server Status</span>
-                    <span className="font-medium">Healthy</span>
+              
+              <div className="bg-white rounded-xl shadow-lg p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">Platform Health</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-gradient-to-r from-primary-600 to-secondary-600 rounded-xl p-6 text-white">
+                    <h3 className="font-semibold mb-4">System Status</h3>
+                    <div className="space-y-2">
+                      <div className="flex justify-between">
+                        <span className="text-primary-100">Server Status</span>
+                        <span className="font-medium">Healthy</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-primary-100">Active Users</span>
+                        <span className="font-medium">2,847</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-primary-100">Storage Used</span>
+                        <span className="font-medium">67%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-primary-100">Last Backup</span>
+                        <span className="font-medium">Today, 04:30 AM</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-primary-100">Active Users</span>
-                    <span className="font-medium">2,847</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-primary-100">Storage Used</span>
-                    <span className="font-medium">67%</span>
+                  
+                  <div className="bg-gray-50 rounded-xl p-6">
+                    <h3 className="font-semibold text-gray-900 mb-4">Latest Updates</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="bg-green-100 p-2 rounded-full">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">System Update Completed</p>
+                          <p className="text-xs text-gray-500">Yesterday, 10:30 PM</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-3">
+                        <div className="bg-blue-100 p-2 rounded-full">
+                          <Upload className="h-4 w-4 text-blue-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">New Features Deployed</p>
+                          <p className="text-xs text-gray-500">Jan 15, 2025</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start space-x-3">
+                        <div className="bg-yellow-100 p-2 rounded-full">
+                          <TrendingUp className="h-4 w-4 text-yellow-600" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">Traffic Increase Detected</p>
+                          <p className="text-xs text-gray-500">Jan 12, 2025</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -254,8 +293,18 @@ const AdminDashboard: React.FC = () => {
 
         {activeTab === 'courses' && (
           <div className="space-y-6">
-            {/* Search and Filters */}
             <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Course Management</h2>
+                <Link
+                  to="/admin/courses/new"
+                  className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
+                >
+                  <Plus className="h-4 w-4" />
+                  <span>New Course</span>
+                </Link>
+              </div>
+              
               <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
                 <div className="flex-1 max-w-md">
                   <div className="relative">
@@ -274,13 +323,6 @@ const AdminDashboard: React.FC = () => {
                     <Filter className="h-4 w-4" />
                     <span>Filter</span>
                   </button>
-                  <Link
-                    to="/admin/courses/new"
-                    className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
-                  >
-                    <Plus className="h-4 w-4" />
-                    <span>New Course</span>
-                  </Link>
                 </div>
               </div>
             </div>
@@ -370,6 +412,157 @@ const AdminDashboard: React.FC = () => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'certificates' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Certificats Délivrés</h2>
+                <button
+                  onClick={() => alert('Exporting certificates data...')}
+                  className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Exporter</span>
+                </button>
+              </div>
+              
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 mb-6">
+                <div className="flex-1 max-w-md">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                    <input
+                      type="text"
+                      placeholder="Rechercher par étudiant ou cours..."
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3">
+                  <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    <Filter className="h-4 w-4" />
+                    <span>Filtrer</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Certificates Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Étudiant
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Cours
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date de Délivrance
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Date d'Achèvement
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {certificates.map((cert) => (
+                      <tr key={cert.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex items-center">
+                            <div className="ml-4">
+                              <div className="text-sm font-medium text-gray-900">{cert.studentName}</div>
+                              <div className="text-sm text-gray-500">{cert.studentEmail}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">{cert.courseTitle}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {new Date(cert.issueDate).toLocaleDateString('fr-FR')}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {new Date(cert.completionDate).toLocaleDateString('fr-FR')}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => navigate(`/certificate/${cert.id}`)}
+                              className="text-primary-600 hover:text-primary-900"
+                              title="Voir le certificat"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </button>
+                            <button
+                              onClick={() => alert(`Téléchargement du certificat pour ${cert.studentName}...`)}
+                              className="text-secondary-600 hover:text-secondary-900"
+                              title="Télécharger le certificat"
+                            >
+                              <Download className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'users' && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-xl shadow-lg p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">User Management</h2>
+                <Link
+                  to="/admin/users"
+                  className="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition-colors flex items-center space-x-2"
+                >
+                  <Users className="h-4 w-4" />
+                  <span>Manage Users</span>
+                </Link>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="text-3xl font-bold text-gray-900 mb-2">{stats.totalStudents.toLocaleString()}</div>
+                  <div className="text-sm text-gray-600 mb-4">Total Students</div>
+                  <div className="flex items-center text-sm text-green-600">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    <span>+12% this month</span>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="text-3xl font-bold text-gray-900 mb-2">{stats.totalInstructors}</div>
+                  <div className="text-sm text-gray-600 mb-4">Total Instructors</div>
+                  <div className="flex items-center text-sm text-green-600">
+                    <TrendingUp className="h-4 w-4 mr-1" />
+                    <span>+5% this month</span>
+                  </div>
+                </div>
+                
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <div className="text-3xl font-bold text-gray-900 mb-2">15</div>
+                  <div className="text-sm text-gray-600 mb-4">Total Admins</div>
+                  <div className="flex items-center text-sm text-gray-600">
+                    <span>No change</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
